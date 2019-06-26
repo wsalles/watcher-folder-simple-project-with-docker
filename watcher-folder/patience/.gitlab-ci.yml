@@ -1,0 +1,37 @@
+image: python:3.5
+
+
+before_script:
+  - >
+    apt update &&
+    apt -y upgrade &&
+    apt -qy install curl git build-essential
+  - curl -s https://bootstrap.pypa.io/get-pip.py | python3.5 -
+
+stages:
+- test
+- publish
+
+test:
+ stage: test
+ script:
+ - pip install tox
+ - tox -e py35
+
+lint:
+ stage: test
+ script:
+ - pip install tox
+ - tox -e lint
+
+publish:
+  stage: publish
+  script:
+  - pip install devpi-client
+  - devpi use -t yes $PYPI_URL --set-cfg
+  - echo $PYPI_PSSWD
+  - devpi login cdap --password $PYPI_PSSWD
+  - devpi use prod --set-cfg
+  - devpi upload --formats=bdist_wheel
+  only:
+  - tags
